@@ -1,6 +1,6 @@
 # A version of the A2 Engine created by Kiya Zadeh
 
-##Additional Docs on top of the standard A2 engine API
+## Additional Docs on top of the standard A2 engine API
 
 ### Saving.SaveState(filename : string)
 
