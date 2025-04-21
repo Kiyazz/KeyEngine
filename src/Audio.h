@@ -8,26 +8,25 @@
 #include <unordered_map>
 
 #include "SDL_mixer.h"
-#include "AudioHelper.h"
 
 class Audio {
 public:
     static Mix_Chunk* loadAudio(const char* file, const std::string& clip) {
-        Mix_Chunk* data = AudioHelper::Mix_LoadWAV(file);
+        Mix_Chunk* data = Mix_LoadWAV(file);
         audioCache[clip] = data;
         return data;
     }
 
     static void playBackgroundLooped(Mix_Chunk* audio) {
-        AudioHelper::Mix_PlayChannel(0, audio, -1);
+        Mix_PlayChannel(0, audio, -1);
     }
 
     static void playAudioOnce(Mix_Chunk* audio) {
-        AudioHelper::Mix_PlayChannel(0, audio, 0);
+        Mix_PlayChannel(0, audio, 0);
     }
 
     static void playAudioOnceOnChannel(Mix_Chunk * mix_chunk, int i) {
-        AudioHelper::Mix_PlayChannel(i, mix_chunk, 0);
+        Mix_PlayChannel(i, mix_chunk, 0);
     }
 
     static void playAudio(int channel, const std::string& clip, bool loop) {
@@ -48,15 +47,15 @@ public:
                 exit(0);
             }
         }
-        AudioHelper::Mix_PlayChannel(channel, chunk, loop ? -1 : 0);
+        Mix_PlayChannel(channel, chunk, loop ? -1 : 0);
     }
 
     static void haltChannel(int channel) {
-        AudioHelper::Mix_HaltChannel(channel);
+        Mix_HaltChannel(channel);
     }
 
     static void setVol(int channel, int vol) {
-        AudioHelper::Mix_Volume(channel, vol);
+        Mix_Volume(channel, vol);
     }
 
 private:

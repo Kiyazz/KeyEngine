@@ -90,9 +90,15 @@ void ensureSavesDirectory() {
 
 void saveState(const string& saveFile) {
     std::filesystem::create_directory(savesPath);
-    Serializer serial(savesPath+saveFile);
-    serial.writeScene(*Scene::globalSceneRef);
-    serial.writeGlobalTable();
+    try {
+        Serializer serial(savesPath+saveFile);
+        serial.writeBool(false);
+        serial.writeScene(*Scene::globalSceneRef);
+        serial.writeGlobalTable();
+    }
+    catch (SerialError& e) {
+        cerr << e.what() << endl;
+    }
 }
 
 void loadState(const string& saveFile) {
@@ -102,30 +108,46 @@ void loadState(const string& saveFile) {
     Scene::globalSceneRef->saveType = 1;
 }
 
+/**
+ * 
+ * @param saveFile
+ * @param previewData
+ */
 void saveScene(const string& saveFile, const LuaRef& previewData) {
     std::filesystem::create_directory(savesPath);
-    Serializer serial(savesPath+saveFile);
-    size_t count = 0;
-    for (Actor* act : Scene::globalSceneRef->actors) {
-        if (act->serialize) {
-            count++;
+    try {
+        Serializer serial(savesPath+saveFile);
+
+        size_t count = 0;
+        for (Actor* act : Scene::globalSceneRef->actors) {
+            if (act->serialize) {
+                count++;
+            }
+        }
+        if (previewData.isNil()) {
+            serial.writeBool(false);
+        }
+        else {
+            serial.writeBool(true);
+            serial.writeTable(previewData);
+        }
+        serial.writeSizeT(count);
+        for (Actor* act : Scene::globalSceneRef->actors) {
+            if (act->serialize) {
+                serial.writeActor(act);
+            }
         }
     }
-    if (previewData.isNil()) {
-        serial.writeBool(false);
-    }
-    else {
-        serial.writeBool(true);
-        serial.writeTable(previewData);
-    }
-    serial.writeSizeT(count);
-    for (Actor* act : Scene::globalSceneRef->actors) {
-        if (act->serialize) {
-            serial.writeActor(act);
-        }
+    catch (SerialError& e) {
+        cerr << e.what() << endl;
     }
 }
 
+/**
+ *
+ * @param saveFile The file to save to
+ * @param scene The scene to use as a base
+ */
 void loadSceneWithFile(const string& saveFile, const string& scene) {
     std::filesystem::create_directory(savesPath);
     Scene::globalSceneRef->nextScene2 = savesPath+saveFile;
@@ -148,7 +170,7 @@ LuaRef getAllSaves() {
             string filename = it.path().filename().string();
             Deserializer serial(it.path().string());
             bool preview = serial.readBool();
-            LuaRef ref(luaState);
+            LuaRef ref = newTable(luaState);
             if (preview) {
                 std::vector<Reference> relocTable;
                 ref = serial.readTable(relocTable);

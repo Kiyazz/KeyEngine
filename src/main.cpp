@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <algorithm>
-#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -20,7 +19,6 @@
 
 #include "lua.hpp"
 #include "RigidBody.h"
-#include "serializer.h"
 
 using std::cout;
 using std::endl;
@@ -83,7 +81,7 @@ bool compActors(Actor* a, Actor* b) {
     return a->uuid < b->uuid;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) { // NOLINT main should return 0
     std::ios_base::sync_with_stdio(false);
     // read json files and initialize
     rapidjson::Document config;
@@ -113,14 +111,14 @@ int main(int argc, char* argv[]) {
     SDL_Window *window = nullptr;
 
     SDL_Init(SDL_INIT_EVERYTHING);
-    window = Helper::SDL_CreateWindow(game_title.c_str(), 200, 200, WIDTH, HEIGHT,
+    window = SDL_CreateWindow(game_title.c_str(), 200, 200, WIDTH, HEIGHT,
                                       SDL_WINDOW_SHOWN);
-    renderer = Helper::SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     SDL_SetRenderDrawColor(renderer, clearColor.r, clearColor.g, clearColor.b, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     Mix_Init(MIX_INIT_OGG);
-    AudioHelper::Mix_OpenAudio(48000, AUDIO_F32SYS, 2, 2048);
-    AudioHelper::Mix_AllocateChannels(50);
+    Mix_OpenAudio(48000, AUDIO_F32SYS, 2, 2048);
+    Mix_AllocateChannels(50);
 
     TTF_Init();
 
@@ -134,7 +132,7 @@ int main(int argc, char* argv[]) {
 
     // load scene
     Scene scene(string(config["initial_scene"].GetString()) + ".scene");
-    Scene::globalSceneRef = &scene;
+    Scene::globalSceneRef = &scene; //NOLINT address can't escape main
 
     ContactListener listener;
     if (RigidBody::world) RigidBody::world->SetContactListener(&listener);
@@ -147,7 +145,7 @@ int main(int argc, char* argv[]) {
         // updates
         SDL_Event event;
         // input
-        while (Helper::SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 exitFlag = false;
             }
@@ -160,6 +158,7 @@ int main(int argc, char* argv[]) {
                     // load save state
                     Deserializer serial(scene.nextScene);
                     std::vector<Reference> relocTable;
+                    serial.readBool();
                     std::unordered_map<string, Actor> templates = std::move(scene.templates);
                     scene.~Scene();
                     new(&scene) Scene(serial.readScene(relocTable, std::move(templates)));
@@ -169,8 +168,7 @@ int main(int argc, char* argv[]) {
                     std::vector<Actor*> acts = scene.actors;
                     string nextScene = scene.nextScene;
                     Deserializer serial(scene.nextScene2);
-                    bool preview = serial.readBool();
-                    if (preview) {
+                    if (serial.readBool()) {
                         std::vector<Reference> relocTable;
                         serial.readTable(relocTable);
                     }
@@ -195,8 +193,7 @@ int main(int argc, char* argv[]) {
                     scene.resolveRelocTable(relocTable);
                 } else if (scene.saveType == 3) {
                     Deserializer serial(scene.nextScene);
-                    bool preview = serial.readBool();
-                    if (preview) {
+                    if (serial.readBool()) {
                         std::vector<Reference> relocTable;
                         serial.readTable(relocTable);
                     }

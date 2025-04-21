@@ -168,11 +168,11 @@ void RigidBody::serialize(Serializer &serial) {
 	}
 }
 
-void RigidBody::AddForce(b2Vec2 vec) {
+void RigidBody::AddForce(b2Vec2 vec) const {
 	body->ApplyForceToCenter(vec, true);
 }
 
-void RigidBody::setVelocity(b2Vec2 vec) {
+void RigidBody::setVelocity(b2Vec2 vec) const {
 	body->SetLinearVelocity(vec);
 }
 
@@ -189,7 +189,7 @@ void RigidBody::setRotation(float degrees) {
 	} else body->SetTransform(body->GetPosition(), degrees * (b2_pi / 180.0f));
 }
 
-void RigidBody::setAngularVelocity(float degrees) {
+void RigidBody::setAngularVelocity(float degrees) const {
 	body->SetAngularVelocity(degrees * (b2_pi / 180.0f));
 }
 

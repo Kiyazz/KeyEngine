@@ -19,8 +19,7 @@ inline bool is_big_endian() {
     return b.c[0] == 1;
 }
 
-template<typename T>
-T swap_endian(T u) {
+template <typename T> T swap_endian(T u) {
     union {
         T u;
         unsigned char u8[sizeof(T)];

@@ -90,9 +90,9 @@ void InputManager::lateUpdate() {
         if (keys[i] == KeyJustDown) keys[i] = KeyDown;
         if (keys[i] == KeyJustUp) keys[i] = KeyUP;
     }
-    for (int i = 0; i < 4; i++) {
-        if (mouseKeys[i] == KeyJustDown) mouseKeys[i] = KeyDown;
-        if (mouseKeys[i] == KeyJustUp) mouseKeys[i] = KeyUP;
+    for (auto& mouseKey : mouseKeys) {
+        if (mouseKey == KeyJustDown) mouseKey = KeyDown;
+        if (mouseKey == KeyJustUp) mouseKey = KeyUP;
     }
     mouseWheel = 0.0f;
 }
@@ -105,8 +105,8 @@ void InputManager::processEvent(SDL_Event *e) {
         keys[e->key.keysym.scancode] = KeyJustUp;
     }
     else if (e->type == SDL_MOUSEMOTION) {
-        lastMousePos.x = e->motion.x;
-        lastMousePos.y = e->motion.y;
+        lastMousePos.x = e->motion.x; //NOLINT narrowing conversion
+        lastMousePos.y = e->motion.y; //NOLINT narrowing conversion
     }
     else if (e->type == SDL_MOUSEBUTTONDOWN) {
         mouseKeys[e->button.button] = KeyJustDown;

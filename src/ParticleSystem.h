@@ -43,8 +43,8 @@ public:
     glm::u8vec4 endColor = {255, 255, 255, 255};
     float dragFactor = 1.0f;
     float angularDragFactor = 1.0f;
-    float lifetimePerFrame;
-    float lifetime1;
+    float lifetimePerFrame{};
+    float lifetime1{};
     float endScale = -9999.0f;
     size_t generated = 0;
     int framesBetweenBursts = 1;

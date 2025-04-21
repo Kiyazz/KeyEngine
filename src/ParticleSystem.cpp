@@ -22,7 +22,7 @@ void ParticleSystem::burst() {
         if (freeIndices.empty()) {
             particles.push_back(particle); // grade again
             vels.push_back(vel);
-            rotations.push_back({angularVel, rotation});
+            rotations.emplace_back(angularVel, rotation);
             scales.push_back(scale);
         }
         else {
@@ -343,13 +343,13 @@ void onStartFunc(LuaRef ref) {
     if (ps->framesBetweenBursts < 1) ps->framesBetweenBursts = 1;
     ps->lifetimePerFrame = 1.0f / static_cast<float>(ps->durationFrames);
     if (ps->durationFrames <= 60) {
-        int significand = ps->lifetimePerFrame * 100000000;
-        ps->lifetimePerFrame = (static_cast<float>(significand) / 100000000);
+        int significand = static_cast<int>(ps->lifetimePerFrame * static_cast<float>(100000000));
+        ps->lifetimePerFrame = (static_cast<float>(significand) / static_cast<float>(100000000));
         ps->lifetime1 = 0.999999f + ps->lifetimePerFrame;
     }
     else {
-        int significand = ps->lifetimePerFrame * 1000000000;
-        ps->lifetimePerFrame = (static_cast<float>(significand) / 1000000000);
+        int significand = static_cast<int>(ps->lifetimePerFrame * static_cast<float>(1000000000));
+        ps->lifetimePerFrame = static_cast<float>(significand) / static_cast<float>(1000000000);
         ps->lifetime1 = 0.999999f + ps->lifetimePerFrame;
     }
     ps->texture = getImage(renderer, ps->image);
@@ -364,7 +364,8 @@ void onStartFunc(LuaRef ref) {
     }
 }
 
-ParticleSystem::ParticleSystem() {
+ParticleSystem::ParticleSystem(): lifetimePerFrame(0), lifetime1(0) {
+    actor = nullptr;
     onStart = &onStartFunc;
     onUpdate = &onUpdateFunc;
     this->type = "ParticleSystem";
