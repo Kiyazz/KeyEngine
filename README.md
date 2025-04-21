@@ -1,5 +1,23 @@
 # A version of the A2 Engine created by Kiya Zadeh
 
+## Building instructions
+
+### Windows
+
+Open the .sln using visual studio and build with the release settings. After building, make sure that the executable has the 4 SDL DLL files present
+
+### OSX
+
+Open the xcode project with xcode and check that the SDL frameworks are present in the build. Use Xcode's build for profiling to compile with release settings
+
+### Linux
+
+Use your distributions package manager to download the SDL, SDL_TTF, SDL_mixer, SDL_image dependencies
+
+Use make lua and make box2d to build the dependencies, 
+
+Afterwards, run make to build the engine in release mode, or make game_engine_linux_debug to build in debig mode
+
 ## Additional Docs on top of the standard A2 engine API
 
 ### Saving.SaveState(filename : string)
