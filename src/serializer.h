@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iosfwd>
 #include <sstream>
+#include <unordered_set>
 #include <utility>
 
 #include "luafuncs.h"
@@ -454,7 +455,7 @@ public:
         char buf[8];
         file.read(buf, 8);
         size_t l;
-        memcpy(&l, buf, 8);
+        memcpy(&l, buf, sizeof(size_t));
         return l;
     }
 

@@ -5,11 +5,9 @@
 #include <vector>
 #include <unordered_map>
 #include <iostream>
-#include <unordered_set>
 
 #include "../glm/glm.hpp"
 #include "SDL_render.h"
-#include "SDL_ttf.h"
 
 #include "lua.hpp"
 #include "LuaBridge.h"

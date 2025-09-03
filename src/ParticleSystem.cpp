@@ -301,7 +301,6 @@ void onUpdateFuncNoNothing(LuaRef ref) {
     if (ps->frameCount % ps->framesBetweenBursts == 0 && ps->playing) {
         ps->burst();
     }
-
     // render + updates particles
     auto& vec = ps->particles;
     for (int i = 0; i < vec.size(); ++i) {
