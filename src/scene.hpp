@@ -146,8 +146,8 @@ public:
 
 	void update();
 	void lateUpdate();
-	size_t getUUID() const { return uuid; }
-	std::string getName() const {return name;}
+	[[nodiscard]] size_t getUUID() const { return uuid; }
+	[[nodiscard]] std::string getName() const {return name;}
 	luabridge::LuaRef getComponentByKey(const std::string& key);
 	Component* getCompPointerByKey(const std::string& key);
 	luabridge::LuaRef getComponentType(const std::string& key);

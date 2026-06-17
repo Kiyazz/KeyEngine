@@ -4,6 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <thread>
+#include <chrono>
 
 #include "Audio.h"
 #include "Helper.h"
@@ -141,6 +142,39 @@ void saveScene(const string& saveFile, const LuaRef& previewData) {
     catch (SerialError& e) {
         cerr << e.what() << endl;
     }
+}
+
+void autosaveThread(const string& saveFile) {
+    std::filesystem::create_directory(savesPath);
+    while (true) {
+        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        try {
+            Serializer serial(savesPath+saveFile);
+            autosaving_mutex.lock_shared();
+            size_t count = 0;
+
+            for (Actor* act : Scene::globalSceneRef->actors) {
+                if (act->serialize) {
+                    count++;
+                }
+            }
+            serial.writeSizeT(count);
+            for (Actor* act : Scene::globalSceneRef->actors) {
+                if (act->serialize) {
+                    serial.writeActor(act);
+                }
+            }
+
+            autosaving_mutex.unlock_shared();
+        }
+        catch (SerialError& e) {
+            cerr << e.what() << endl;
+        }
+    }
+}
+
+void enableAutosaving(const string& saveFile) {
+    std::thread autosave(autosaveThread, saveFile);
 }
 
 /**
@@ -364,6 +398,7 @@ void initializeGlobalFunctions() {
         .addFunction("LoadSaveFromFile", &loadSceneWithFile)
         .addFunction("LoadSaveCurrentScene", &loadSceneCurrent)
         .addFunction("GetAllSaves", &getAllSaves)
+        .addFunction("EnableAutosaving", &enableAutosaving)
         .endNamespace();
 }
 

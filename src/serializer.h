@@ -199,7 +199,7 @@ public:
         current_pos += 8;
     }
 
-    // Function will recursively call writeTable if component is storing tables inside of it
+    // Function will recursively call writeTable if component is storing tables inside it
     void writeTable(const luabridge::LuaRef &ref) {
         assert(ref.type() == LUA_TTABLE);
         luabridge::Iterator it(ref);

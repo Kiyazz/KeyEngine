@@ -15,7 +15,7 @@
 
 inline std::vector<HitResult> raycastResults;
 
-class singleRaycast : public b2RayCastCallback {
+class singleRaycast final : public b2RayCastCallback {
 
 	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float fraction) override {
 		raycastResults.clear();
@@ -29,7 +29,7 @@ class singleRaycast : public b2RayCastCallback {
 
 inline singleRaycast singleInstance;
 
-class multiRaycast : public b2RayCastCallback {
+class multiRaycast final : public b2RayCastCallback {
 
 	float ReportFixture(b2Fixture* fixture, const b2Vec2& point, const b2Vec2& normal, float fraction) override {
 		auto* actor = reinterpret_cast<Actor*>(fixture->GetUserData().pointer);
@@ -41,8 +41,8 @@ class multiRaycast : public b2RayCastCallback {
 
 inline multiRaycast multiInstance;
 
-luabridge::LuaRef raycast(b2Vec2 pos, b2Vec2 dir, float dist) {
-	luabridge::LuaRef ref = luabridge::LuaRef(luaState);
+inline luabridge::LuaRef raycast(b2Vec2 pos, b2Vec2 dir, float dist) {
+	auto ref = luabridge::LuaRef(luaState);
 	if (!RigidBody::world) return ref;
 	raycastResults.clear();
 	dir.Normalize();
@@ -52,16 +52,14 @@ luabridge::LuaRef raycast(b2Vec2 pos, b2Vec2 dir, float dist) {
 	return ref;
 }
 
-b2Vec2 base;
-
-luabridge::LuaRef raycastAll(b2Vec2 pos, b2Vec2 dir, float dist) {
+inline luabridge::LuaRef raycastAll(b2Vec2 pos, b2Vec2 dir, float dist) {
 	luabridge::LuaRef ref = luabridge::newTable(luaState);
 	if (!RigidBody::world) return ref;
-	base = pos;
+	b2Vec2 base = pos;
 	raycastResults.clear();
 	dir.Normalize();
 	RigidBody::world->RayCast(&multiInstance, pos, pos + (dist * dir));
-	std::sort(raycastResults.begin(), raycastResults.end(), [](const HitResult& a, const HitResult& b) {
+	std::sort(raycastResults.begin(), raycastResults.end(), [base](const HitResult& a, const HitResult& b) {
 		return b2DistanceSquared(base, a.point) < b2DistanceSquared(base, b.point);
 		});
 	for (int i = 0; i < raycastResults.size(); i++) {

@@ -42,6 +42,8 @@ float HALFWZOOM = 180.0f;
 lua_State* luaState = nullptr;
 SDL_Renderer* renderer = nullptr;
 
+std::shared_mutex autosaving_mutex;
+
 void cleanUp(SDL_Renderer *renderer, SDL_Window *window) {
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
@@ -154,6 +156,7 @@ int main(int argc, char* argv[]) { // NOLINT main should return 0
         // check for new scenes
         if (!scene.nextScene.empty()) {
             if (scene.loadedSave) {
+                autosaving_mutex.lock();
                 if (scene.saveType == 1) {
                     // load save state
                     Deserializer serial(scene.nextScene);
@@ -214,19 +217,23 @@ int main(int argc, char* argv[]) { // NOLINT main should return 0
                     smoothSort(scene.actors, compActors);
                     scene.resolveRelocTable(relocTable);
                 }
+                autosaving_mutex.unlock();
             }
             else {
+                autosaving_mutex.lock();
                 // save info needed from old scene
                 std::vector<Actor*> acts = scene.actors;
                 string nextScene = scene.nextScene;
                 std::unordered_map<string, Actor> templates = std::move(scene.templates);
                 scene.~Scene();
                 new(&scene) Scene(nextScene + ".scene", acts, templates);
+                autosaving_mutex.unlock();
             }
             scene.loadedSave = false;
             scene.nextScene = "";
         }
         // actor processing
+        autosaving_mutex.lock();
         scene.onStart();
         for (Actor* actor : scene.actors) {
             // actor updating
@@ -240,6 +247,7 @@ int main(int argc, char* argv[]) { // NOLINT main should return 0
         Events::lateUpdate();
         if (RigidBody::world)
             RigidBody::world->Step(1.0f / 60.0f, 8, 3);
+        autosaving_mutex.unlock();
         // rendering
         scene.renderFrame();
         // processing finished

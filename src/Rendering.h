@@ -111,7 +111,7 @@ inline std::vector<int> memo;
 // HAHA WE DO DYNAMIC PROGRAMMING HERE
 inline int leonardo(const int k) {
     if (k < 2) return 1;
-    // ensure memo is big enough for operation
+    // ensure the memo is big enough for operation
     memo.reserve(k+1);
     if (memo.empty()) {
         // sentinel value, want memo to be 1-indexed

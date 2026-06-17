@@ -12,6 +12,7 @@ file(GLOB BOX2DSRC
         Box2D/src/dynamics/*.cpp
         Box2D/src/rope/*.cpp
 )
+file (GLOB LUASRC Lua/sources/*.c)
 
 include_directories(
         glm
@@ -24,6 +25,21 @@ include_directories(
         LuaBridge
         Box2D/include
         Box2D/src
+)
+
+add_library(lua STATIC ${LUASRC})
+set_target_properties(lua PROPERTIES
+        OUTPUT_NAME lua
+        POSITION_INDEPENDENT_CODE ON
+        LINKER_LANGUAGE C)
+if (WIN32)
+    set_target_properties(lua PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/Lua)
+add_custom_command(TARGET lua POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/Lua"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:lua>" "${CMAKE_SOURCE_DIR}/Lua"
+        COMMENT "Placing Lua static library library into ${CMAKE_SOURCE_DIR}/Lua"
 )
 
 # Build Box2D as a shared library on all platforms and place the result in Box2D/
@@ -119,37 +135,37 @@ endif()
 
 if(APPLE)
     # On macOS, compile Box2D sources with the main code directly
-    add_executable(game_engine_linux ${SOURCES} ${BOX2DSRC})
+    add_executable(game_engine ${SOURCES} ${BOX2DSRC})
 else()
-    add_executable(game_engine_linux ${SOURCES})
+    add_executable(game_engine ${SOURCES})
 endif()
-target_compile_options(game_engine_linux PRIVATE -O3 -DNDEBUG -Wall -pedantic)
-target_link_libraries(game_engine_linux PRIVATE ${PLATFORM_LIBS})
+target_compile_options(game_engine PRIVATE -O3 -DNDEBUG -Wall -pedantic)
+target_link_libraries(game_engine PRIVATE ${PLATFORM_LIBS})
 
 # ---- POST-BUILD: Platform-specific resource copying ----
 
 if(WIN32)
-    add_custom_command(TARGET game_engine_linux POST_BUILD
+    add_custom_command(TARGET game_engine POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${SDL2_DLL}"
             "${SDL2_IMAGE_DLL}"
             "${SDL2_MIXER_DLL}"
             "${SDL2_TTF_DLL}"
             "${BOX2D_DLL}"
-            $<TARGET_FILE_DIR:game_engine_linux>
+            $<TARGET_FILE_DIR:game_engine>
             COMMENT "Copying SDL and Box2D DLLs to output directory"
     )
 endif()
 
 if(APPLE)
     # Copy frameworks to next to executable (or to bundle if using APP)
-    set(APP_OUTPUT_DIR "$<TARGET_FILE_DIR:game_engine_linux>")
+    set(APP_OUTPUT_DIR "$<TARGET_FILE_DIR:game_engine>")
     foreach(fw_dir IN ITEMS
             ${SDL2_FRAMEWORK_DIR}
             ${SDL2_IMAGE_FRAMEWORK_DIR}
             ${SDL2_MIXER_FRAMEWORK_DIR}
             ${SDL2_TTF_FRAMEWORK_DIR})
-        add_custom_command(TARGET game_engine_linux POST_BUILD
+        add_custom_command(TARGET game_engine POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy_directory
                 "${fw_dir}" "${APP_OUTPUT_DIR}/$(basename ${fw_dir})"
                 COMMENT "Copying framework: ${fw_dir}"

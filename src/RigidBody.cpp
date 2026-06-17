@@ -297,9 +297,8 @@ void ContactListener::BeginContact(b2Contact *contact) {
 	col.other = reinterpret_cast<Actor *>(B->GetUserData().pointer);
 	auto *actor = reinterpret_cast<Actor *>(A->GetUserData().pointer);
 
-	for (std::pair<const std::string, Component *> &c: actor->components) {
-		Component *component = c.second;
-		if (trigger && component->onTriggerEnter)
+	for (auto &[fst, snd]: actor->components) {
+		if (Component *component = snd; trigger && component->onTriggerEnter)
 			try {
 				component->onTriggerEnter(component->first, col);
 			}
@@ -315,9 +314,8 @@ void ContactListener::BeginContact(b2Contact *contact) {
 		}
 	}
 	std::swap(col.other, actor);
-	for (std::pair<const std::string, Component *> &c: actor->components) {
-		Component *component = c.second;
-		if (trigger && component->onTriggerEnter)
+	for (auto &[fst, snd]: actor->components) {
+		if (Component *component = snd; trigger && component->onTriggerEnter)
 			try {
 				component->onTriggerEnter(component->first, col);
 			}

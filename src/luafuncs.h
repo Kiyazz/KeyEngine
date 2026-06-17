@@ -5,8 +5,12 @@
 #ifndef LUAFUNCS_H
 #define LUAFUNCS_H
 
+#include <shared_mutex>
+
 #include "lua.hpp"
 #include "LuaBridge.h"
+
+extern std::shared_mutex autosaving_mutex;
 
 extern lua_State* luaState;
 

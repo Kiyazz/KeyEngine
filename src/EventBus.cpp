@@ -33,7 +33,7 @@ void Events::lateUpdate() {
     }
     for (const auto& event : removedThisFrame) {
         auto& vec = subscriptions[event.type];
-        std::pair<luabridge::LuaRef, luabridge::LuaRef> pair = {event.component, event.function};
+        std::pair pair = {event.component, event.function};
         vec.erase(std::find(vec.begin(), vec.end(), pair));
     }
     addedThisFrame.clear();

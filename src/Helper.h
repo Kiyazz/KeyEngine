@@ -138,7 +138,7 @@ public:
 	void Configure(float min, float max, int seed_look_up_in_assignment_spec_pls)
 	{
 		engine = std::default_random_engine(seed_look_up_in_assignment_spec_pls);
-		distribution = std::uniform_real_distribution<float>(min, max);
+		distribution = std::uniform_real_distribution(min, max);
 
 	}
 

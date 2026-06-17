@@ -59,7 +59,7 @@ public:
     }
 
 private:
-    static inline std::unordered_map<std::string, Mix_Chunk*> audioCache = std::unordered_map<std::string, Mix_Chunk*>();
+    static inline auto audioCache = std::unordered_map<std::string, Mix_Chunk*>();
 };
 
 #endif //AUDIO_H
