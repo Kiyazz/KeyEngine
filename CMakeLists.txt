@@ -1,21 +1,19 @@
 cmake_minimum_required(VERSION 3.14)
-project(game_engine CXX)
+project(game_engine C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB SOURCES src/*.cpp)
 file(GLOB TESTSOURCES test*.cpp)
-file(GLOB BOX2DSRC
-        Box2D/src/collision/*.cpp
-        Box2D/src/common/*.cpp
-        Box2D/src/dynamics/*.cpp
-        Box2D/src/rope/*.cpp
-)
-file (GLOB LUASRC Lua/sources/*.c)
+# Configure Box2D before adding it
+set(BOX2D_BUILD_SHARED ON CACHE BOOL "Build Box2D shared libraries" FORCE)
+set(BOX2D_BUILD_EXAMPLES OFF CACHE BOOL "Build Box2D examples" FORCE)
+add_subdirectory(Box2D)
+add_subdirectory(Lua)
 
 include_directories(
-        glm
+        glm/glm
         rapidsjon
         SDL_Image
         SDL_mixer
@@ -27,40 +25,7 @@ include_directories(
         Box2D/src
 )
 
-add_library(lua STATIC ${LUASRC})
-set_target_properties(lua PROPERTIES
-        OUTPUT_NAME lua
-        POSITION_INDEPENDENT_CODE ON
-        LINKER_LANGUAGE C)
-if (WIN32)
-    set_target_properties(lua PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
-target_include_directories(lua PUBLIC ${CMAKE_SOURCE_DIR}/Lua)
-add_custom_command(TARGET lua POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/Lua"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:lua>" "${CMAKE_SOURCE_DIR}/Lua"
-        COMMENT "Placing Lua static library library into ${CMAKE_SOURCE_DIR}/Lua"
-)
 
-# Build Box2D as a shared library on all platforms and place the result in Box2D/
-add_library(box2d SHARED ${BOX2DSRC})
-set_target_properties(box2d PROPERTIES
-        OUTPUT_NAME box2d
-        POSITION_INDEPENDENT_CODE ON
-)
-if(WIN32)
-    # Export all symbols automatically on Windows if Box2D sources don't define dllexport
-    set_target_properties(box2d PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
-target_include_directories(box2d PUBLIC
-        ${CMAKE_SOURCE_DIR}/Box2D/include
-        ${CMAKE_SOURCE_DIR}/Box2D/src
-)
-add_custom_command(TARGET box2d POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_SOURCE_DIR}/Box2D"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:box2d>" "${CMAKE_SOURCE_DIR}/Box2D"
-        COMMENT "Placing Box2D shared library into ${CMAKE_SOURCE_DIR}/Box2D"
-)
 
 if(WIN32)
     # Use local DLLs and copy them post-build
@@ -68,16 +33,16 @@ if(WIN32)
     set(SDL2_IMAGE_DLL   "${CMAKE_SOURCE_DIR}/SDL_Image/SDL2_image.dll")
     set(SDL2_MIXER_DLL   "${CMAKE_SOURCE_DIR}/SDL_mixer/SDL2_mixer.dll")
     set(SDL2_TTF_DLL     "${CMAKE_SOURCE_DIR}/SDL_TTF/SDL2_ttf.dll")
-    set(BOX2D_DLL        "${CMAKE_SOURCE_DIR}/Box2D/box2d.dll")
-    set(PLATFORM_LIBS    SDL2 SDL2main SDL2_image SDL2_ttf SDL2_mixer lua box2d)
+    set(BOX2D_DLL        "$<TARGET_FILE:box2d>")
+
     link_directories(
-            SDL
-            SDL_Image
-            SDL_mixer
-            SDL_TTF
-            Lua
-            Box2D
+            "${CMAKE_SOURCE_DIR}/SDL"
+            "${CMAKE_SOURCE_DIR}/SDL_Image"
+            "${CMAKE_SOURCE_DIR}/SDL_mixer"
+            "${CMAKE_SOURCE_DIR}/SDL_TTF"
     )
+
+    set(PLATFORM_LIBS    SDL2 SDL2main SDL2_image SDL2_ttf SDL2_mixer lua box2d)
 
 elseif(APPLE)
     # Assume frameworks are present in analogous 'lib' folders, like ./SDL/lib/SDL2.framework
@@ -125,10 +90,7 @@ else()
             ${SDL2_MIXER_LIBRARIES}
             ${SDL2_TTF_LIBRARIES}
             ${LUA_LIBRARIES}
-            box2d
     )
-    # Link to our local Box2D shared lib
-    link_directories(${CMAKE_SOURCE_DIR}/Box2D)
 endif()
 
 # ---- The actual executable ----
@@ -139,6 +101,7 @@ if(APPLE)
 else()
     add_executable(game_engine ${SOURCES})
 endif()
+add_dependencies(game_engine box2d lua)
 target_compile_options(game_engine PRIVATE -O3 -DNDEBUG -Wall -pedantic)
 target_link_libraries(game_engine PRIVATE ${PLATFORM_LIBS})
 

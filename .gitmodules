@@ -1,0 +1,9 @@
+[submodule "glm"]
+	path = glm
+	url = https://github.com/g-truc/glm
+[submodule "rapidjson"]
+    path = rapidjson
+    url = https://github.com/Tencent/rapidjson
+[submodule "Box2D"]
+	path = Box2D
+	url = https://github.com/eXpl0it3r/Box2D

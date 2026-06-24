@@ -12,11 +12,7 @@
 #include "lua.hpp"
 #include "LuaBridge.h"
 
-#ifdef __APPLE__
-#include "box2d.h"
-#else
-#include "box2d/box2d.h"
-#endif
+#include "Box2D/Box2D.hpp"
 
 
 #ifndef _WIN32
@@ -89,17 +85,17 @@ class Actor;
 
 struct Collision {
 	Actor* other = nullptr;
-	b2Vec2 point;
-	b2Vec2 relativeVelocity;
-	b2Vec2 normal;
+	b2::Vec2 point;
+	b2::Vec2 relativeVelocity;
+	b2::Vec2 normal;
 };
 
 struct HitResult {
 	Actor* actor;
-	b2Vec2 point;
-	b2Vec2 normal;
+	b2::Vec2 point;
+	b2::Vec2 normal;
 	bool isTrigger;
-	HitResult(Actor* actor, const b2Vec2& point, const b2Vec2& normal, bool isTrigger) 
+	HitResult(Actor* actor, const b2::Vec2& point, const b2::Vec2& normal, bool isTrigger)
 		: actor(actor), point(point), normal(normal), isTrigger(isTrigger) {}
 };
 

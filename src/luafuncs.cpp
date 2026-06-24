@@ -14,11 +14,7 @@
 #include "scene.hpp"
 #include "serializer.h"
 
-#ifdef __APPLE__
-#include "box2d.h"
-#else
-#include "../Box2D/include/box2d/box2d.h"
-#endif
+#include "Box2D/Box2D.hpp"
 
 using namespace std;
 
@@ -177,6 +173,17 @@ void enableAutosaving(const string& saveFile) {
     std::thread autosave(autosaveThread, saveFile);
 }
 
+float b2Dot(const b2::Vec2& a, const b2::Vec2& b)
+{
+    return a.x * b.x + a.y * b.y;
+}
+
+float b2Distance(const b2::Vec2& a, const b2::Vec2& b)
+{
+    b2::Vec2 c = a - b;
+    return c.Length();
+}
+
 /**
  *
  * @param saveFile The file to save to
@@ -226,16 +233,16 @@ void initializeGlobalFunctions() {
         .addFunction("Draw", drawText)
         .endNamespace();
     getGlobalNamespace(luaState)
-        .beginClass<b2Vec2>("Vector2")
-        .addProperty("x", &b2Vec2::x)
-        .addProperty("y", &b2Vec2::y)
-        .addFunction("Normalize", &b2Vec2::Normalize)
-        .addFunction("Length", &b2Vec2::Length)
+        .beginClass<b2::Vec2>("Vector2")
+        .addProperty("x", &b2::Vec2::x)
+        .addProperty("y", &b2::Vec2::y)
+        .addFunction("Normalize", &b2::Vec2::Normalize)
+        .addFunction("Length", &b2::Vec2::Length)
         .addConstructor<void(*)(float, float)>()
-        .addFunction("__add", &b2Vec2::operatorAdd)
-        .addFunction("__sub", &b2Vec2::operatorSub)
-        .addFunction("__mul", &b2Vec2::operatorMul)
-        .addStaticFunction("Dot", static_cast<float(*)(const b2Vec2&, const b2Vec2&)>(&b2Dot))
+        .addFunction("__add", &b2::Vec2::operatorAdd)
+        .addFunction("__sub", &b2::Vec2::operatorSub)
+        .addFunction("__mul", &b2::Vec2::operatorMul)
+        .addStaticFunction("Dot", static_cast<float(*)(const b2::Vec2&, const b2::Vec2&)>(&b2Dot))
         .addStaticFunction("Distance", &b2Distance)
         .endClass();
     getGlobalNamespace(luaState)

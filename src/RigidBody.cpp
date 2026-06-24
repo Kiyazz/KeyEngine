@@ -7,42 +7,43 @@
 #include "lua.hpp"
 #include "LuaBridge.h"
 #include "serializer.h"
+#include "Box2D/Collision/Collision.hpp"
 
 using namespace luabridge;
 
 
-b2Vec2 RigidBody::getPosition() const {
+b2::Vec2 RigidBody::getPosition() const {
 	if (!body) return {x, y};
 	return body->GetPosition();
 }
 
 float RigidBody::getRotation() const {
-	if (!body) return rotation * (180 / b2_pi);
-	return body->GetAngle() * (180 / b2_pi);
+	if (!body) return rotation * (180 / b2::pi);
+	return body->GetAngle() * (180 / b2::pi);
 }
 
 void onStartFun(LuaRef ref) {
 	auto *rb = ref.cast<RigidBody *>();
-	b2BodyDef def;
+	b2::BodyDef def;
 	def.position = {rb->x, rb->y};
-	def.angle = rb->rotation * (b2_pi / 180.0f);
+	def.angle = rb->rotation * (b2::pi / 180.0f);
 
 	def.angularDamping = rb->angularDampening;
 	def.gravityScale = rb->gravityScale;
 	def.bullet = rb->precise;
-	if (rb->bodyType == "dynamic") def.type = b2_dynamicBody;
-	else if (rb->bodyType == "static") def.type = b2_staticBody;
-	else def.type = b2_kinematicBody;
+	if (rb->bodyType == "dynamic") def.type = b2::dynamicBody;
+	else if (rb->bodyType == "static") def.type = b2::staticBody;
+	else def.type = b2::kinematicBody;
 
 	rb->body = RigidBody::world->CreateBody(&def);
 	if (rb->has_collider) {
-		b2FixtureDef fixture;
-		b2PolygonShape shape;
+		b2::FixtureDef fixture;
+		b2::PolygonShape shape;
 		if (rb->colliderType == "box") {
 			shape.SetAsBox(0.5f * rb->width, 0.5f * rb->height);
 			fixture.shape = &shape;
 		} else {
-			auto circle = new b2CircleShape();
+			auto circle = new b2::CircleShape();
 			circle->m_radius = rb->radius;
 			fixture.shape = circle;
 		}
@@ -52,20 +53,20 @@ void onStartFun(LuaRef ref) {
 		fixture.density = rb->density;
 		fixture.filter.categoryBits = 2;
 		fixture.filter.maskBits = 2;
-		fixture.userData.pointer = reinterpret_cast<uintptr_t>(rb->actor);
+		fixture.userData = reinterpret_cast<void*>(rb->actor);
 		rb->body->CreateFixture(&fixture);
 		if (rb->colliderType == "circle") {
 			delete fixture.shape;
 		}
 	}
 	if (rb->has_trigger) {
-		b2FixtureDef fixture;
-		b2PolygonShape shape;
+		b2::FixtureDef fixture;
+		b2::PolygonShape shape;
 		if (rb->triggerType == "box") {
 			shape.SetAsBox(0.5f * rb->triggerWidth, 0.5f * rb->triggerHeight);
 			fixture.shape = &shape;
 		} else {
-			auto circle = new b2CircleShape();
+			auto circle = new b2::CircleShape();
 			circle->m_radius = rb->triggerRadius;
 			fixture.shape = circle;
 		}
@@ -75,16 +76,16 @@ void onStartFun(LuaRef ref) {
 		fixture.friction = rb->friction;
 		fixture.filter.categoryBits = 4;
 		fixture.filter.maskBits = 4;
-		fixture.userData.pointer = reinterpret_cast<uintptr_t>(rb->actor);
+		fixture.userData = reinterpret_cast<void*>(rb->actor);
 		rb->body->CreateFixture(&fixture);
 		if (rb->triggerType == "circle") {
 			delete fixture.shape;
 		}
 	}
 	if (!rb->has_collider && !rb->has_trigger) {
-		b2PolygonShape shape;
+		b2::PolygonShape shape;
 		shape.SetAsBox(rb->width * 0.5f, rb->height * 0.5f);
-		b2FixtureDef fixture;
+		b2::FixtureDef fixture;
 		fixture.shape = &shape;
 		fixture.density = rb->density;
 		fixture.isSensor = true;
@@ -98,7 +99,7 @@ RigidBody::RigidBody(float x, float y, float angle, float angularFriction, float
 	: bodyType(std::move(bodyType)), x(x), y(y), rotation(angle), angularDampening(angularFriction), density(density),
 	  gravityScale(gravityScale), precise(precise), has_collider(collider), has_trigger(trigger) {
 	if (!world) {
-		world = new b2World(b2Vec2(0.0f, 9.8f));
+		world = new b2::World(b2::Vec2(0.0f, 9.8f));
 	}
 	onStart = onStartFun;
 }
@@ -161,22 +162,24 @@ void RigidBody::serialize(Serializer &serial) {
 	bool bodyExists = body != nullptr;
 	serial.writeBool(bodyExists);
 	if (bodyExists) {
-		serial.writeVec2(getVelocity());
+		auto vec = getVelocity();
+		serial.writeVec2(glm::vec2{vec.x, vec.y});
 		serial.writeFloat(getAngularVelocity());
-		serial.writeVec2(getForce());
+		vec = getForce();
+		serial.writeVec2(glm::vec2{vec.x, vec.y});
 		serial.writeFloat(getTorque());
 	}
 }
 
-void RigidBody::AddForce(b2Vec2 vec) const {
+void RigidBody::AddForce(b2::Vec2 vec) const {
 	body->ApplyForceToCenter(vec, true);
 }
 
-void RigidBody::setVelocity(b2Vec2 vec) const {
+void RigidBody::setVelocity(b2::Vec2 vec) const {
 	body->SetLinearVelocity(vec);
 }
 
-void RigidBody::setPosition(b2Vec2 vec) {
+void RigidBody::setPosition(b2::Vec2 vec) {
 	if (body == nullptr) {
 		x = vec.x;
 		y = vec.y;
@@ -185,12 +188,12 @@ void RigidBody::setPosition(b2Vec2 vec) {
 
 void RigidBody::setRotation(float degrees) {
 	if (body == nullptr) {
-		rotation = degrees * (b2_pi / 180.0f);
-	} else body->SetTransform(body->GetPosition(), degrees * (b2_pi / 180.0f));
+		rotation = degrees * (b2::pi / 180.0f);
+	} else body->SetTransform(body->GetPosition(), degrees * (b2::pi / 180.0f));
 }
 
 void RigidBody::setAngularVelocity(float degrees) const {
-	body->SetAngularVelocity(degrees * (b2_pi / 180.0f));
+	body->SetAngularVelocity(degrees * (b2::pi / 180.0f));
 }
 
 void RigidBody::setGravityScale(float scale) {
@@ -198,30 +201,30 @@ void RigidBody::setGravityScale(float scale) {
 	else body->SetGravityScale(scale);
 }
 
-void RigidBody::setUpDirection(b2Vec2 vec) {
+void RigidBody::setUpDirection(b2::Vec2 vec) {
 	vec.Normalize();
 	float angle = glm::atan(vec.x, -vec.y);
 	if (!body) rotation = angle;
 	else body->SetTransform(body->GetPosition(), angle);
 }
 
-void RigidBody::setRightDirection(b2Vec2 vec) {
+void RigidBody::setRightDirection(b2::Vec2 vec) {
 	vec.Normalize();
-	float angle = glm::atan(vec.x, -vec.y) - (b2_pi / 2.0f);
+	float angle = glm::atan(vec.x, -vec.y) - (b2::pi / 2.0f);
 	if (!body) rotation = angle;
 	else body->SetTransform(body->GetPosition(), angle);
 }
 
-b2Vec2 RigidBody::getForce() const {
+b2::Vec2 RigidBody::getForce() const {
 	return body->GetForce();
 }
 
-b2Vec2 RigidBody::getVelocity() const {
+b2::Vec2 RigidBody::getVelocity() const {
 	return body->GetLinearVelocity();
 }
 
 float RigidBody::getAngularVelocity() const {
-	return body->GetAngularVelocity() * (180.0f / b2_pi);
+	return body->GetAngularVelocity() * (180.0f / b2::pi);
 }
 
 float RigidBody::getGravityScale() const {
@@ -229,21 +232,21 @@ float RigidBody::getGravityScale() const {
 	return body->GetGravityScale();
 }
 
-b2Vec2 RigidBody::getUpDirection() const {
+b2::Vec2 RigidBody::getUpDirection() const {
 	float angle;
 	if (!body) angle = rotation;
 	else angle = body->GetAngle();
-	angle -= (b2_pi * 0.5f);
-	b2Vec2 result = {glm::cos(angle), glm::sin(angle)};
+	angle -= (b2::pi * 0.5f);
+	b2::Vec2 result = {glm::cos(angle), glm::sin(angle)};
 	result.Normalize();
 	return result;
 }
 
-b2Vec2 RigidBody::getRightDirection() const {
+b2::Vec2 RigidBody::getRightDirection() const {
 	float angle;
 	if (!body) angle = rotation;
 	else angle = body->GetAngle();
-	b2Vec2 result = {glm::cos(angle), glm::sin(angle)};
+	b2::Vec2 result = {glm::cos(angle), glm::sin(angle)};
 	result.Normalize();
 	return result;
 }
@@ -276,13 +279,13 @@ float RigidBody::getTorque() const {
 	return body->getTorque();
 }
 
-const b2Vec2 sentinel = {-999.0f, -999.0f};
+const b2::Vec2 sentinel = {-999.0f, -999.0f};
 
-void ContactListener::BeginContact(b2Contact *contact) {
-	b2Fixture *A = contact->GetFixtureA();
-	b2Fixture *B = contact->GetFixtureB();
+void ContactListener::BeginContact(b2::Contact *contact) {
+	b2::Fixture *A = contact->GetFixtureA();
+	b2::Fixture *B = contact->GetFixtureB();
 	Collision col;
-	b2WorldManifold manifold;
+	b2::WorldManifold manifold;
 	contact->GetWorldManifold(&manifold);
 	bool trigger = (A->GetFilterData().categoryBits & 4) != 0;
 	col.relativeVelocity = A->GetBody()->GetLinearVelocity() - B->GetBody()->GetLinearVelocity();
@@ -294,8 +297,8 @@ void ContactListener::BeginContact(b2Contact *contact) {
 		col.point = manifold.points[0];
 		col.normal = manifold.normal;
 	}
-	col.other = reinterpret_cast<Actor *>(B->GetUserData().pointer);
-	auto *actor = reinterpret_cast<Actor *>(A->GetUserData().pointer);
+	col.other = static_cast<Actor *>(B->GetUserData());
+	auto *actor = static_cast<Actor *>(A->GetUserData());
 
 	for (auto &[fst, snd]: actor->components) {
 		if (Component *component = snd; trigger && component->onTriggerEnter)
@@ -332,15 +335,15 @@ void ContactListener::BeginContact(b2Contact *contact) {
 	}
 }
 
-void ContactListener::EndContact(b2Contact *contact) {
-	b2Fixture *A = contact->GetFixtureA();
-	b2Fixture *B = contact->GetFixtureB();
+void ContactListener::EndContact(b2::Contact *contact) {
+	b2::Fixture *A = contact->GetFixtureA();
+	b2::Fixture *B = contact->GetFixtureB();
 	Collision col;
 	col.point = sentinel;
 	col.relativeVelocity = A->GetBody()->GetLinearVelocity() - B->GetBody()->GetLinearVelocity();
 	col.normal = sentinel;
-	col.other = reinterpret_cast<Actor *>(B->GetUserData().pointer);
-	auto *actor = reinterpret_cast<Actor *>(A->GetUserData().pointer);
+	col.other = static_cast<Actor *>(B->GetUserData());
+	auto *actor = static_cast<Actor *>(A->GetUserData());
 	bool trigger = (A->GetFilterData().categoryBits & 4) != 0;
 	for (std::pair<const std::string, Component *> &c: actor->components) {
 		Component *component = c.second;

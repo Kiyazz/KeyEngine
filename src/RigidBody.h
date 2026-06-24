@@ -8,11 +8,12 @@
 #define RIGIDBODY_H
 
 #include "scene.hpp"
+#include "Box2D/Box2D.hpp"
 
-class ContactListener : public b2ContactListener {
+class ContactListener : public b2::ContactListener {
 
-    void BeginContact(b2Contact *contact) override;
-    void EndContact(b2Contact *contact) override;
+    void BeginContact(b2::Contact *contact) override;
+    void EndContact(b2::Contact *contact) override;
 
 };
 
@@ -20,7 +21,7 @@ class RigidBody : public Component {
 public:
     std::string bodyType;
     std::string key;
-    b2Body* body = nullptr;
+    b2::Body* body = nullptr;
     Actor* actor = nullptr;
     float x, y;
     float rotation;
@@ -41,26 +42,26 @@ public:
     float triggerHeight = 1.0f;
     float triggerRadius = 0.5f;
 
-    [[nodiscard]] b2Vec2 getPosition() const;
+    [[nodiscard]] b2::Vec2 getPosition() const;
     [[nodiscard]] float getRotation() const;
     explicit RigidBody(float x = 0.0f, float y= 0.0f, float angle=0.0f, float angularFriction= 0.3f, float density= 1.0f, std::string bodyType = "dynamic", float gravityScale = 1.0f, bool precise = true, bool collider = true, bool trigger = true);
     explicit RigidBody(Deserializer& serial, Actor* act);
-    void AddForce(b2Vec2 vec) const;
-    void setVelocity(b2Vec2 vec) const;
-    void setPosition(b2Vec2 vec);
+    void AddForce(b2::Vec2 vec) const;
+    void setVelocity(b2::Vec2 vec) const;
+    void setPosition(b2::Vec2 vec);
     void setRotation(float degrees);
     void setAngularVelocity(float degrees) const;
     void setGravityScale(float scale);
-    void setUpDirection(b2Vec2 vec);
-    void setRightDirection(b2Vec2 vec);
+    void setUpDirection(b2::Vec2 vec);
+    void setRightDirection(b2::Vec2 vec);
 
-    [[nodiscard]] b2Vec2 getForce() const;
-    [[nodiscard]] b2Vec2 getVelocity() const;
+    [[nodiscard]] b2::Vec2 getForce() const;
+    [[nodiscard]] b2::Vec2 getVelocity() const;
     [[nodiscard]] float getAngularVelocity() const;
     [[nodiscard]] float getGravityScale() const;
-    [[nodiscard]] b2Vec2 getUpDirection() const;
-    [[nodiscard]] b2Vec2 getRightDirection() const;
-    static inline b2World* world = nullptr;
+    [[nodiscard]] b2::Vec2 getUpDirection() const;
+    [[nodiscard]] b2::Vec2 getRightDirection() const;
+    static inline b2::World* world = nullptr;
     Component* clone() override;
 
     [[nodiscard]] float getTorque() const;

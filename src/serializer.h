@@ -253,7 +253,7 @@ public:
                 writeBool(it.value());
             } else if (it.value().isUserdata()) {
                 // attempt to find what the type is
-                if (it.value().isInstance<b2Vec2>() || it.value().isInstance<glm::vec2>()) {
+                if (it.value().isInstance<b2::Vec2>() || it.value().isInstance<glm::vec2>()) {
                     auto vec = it.value();
                     // is a b2vec2, so print as 2 floats
                     writeChar(6);
@@ -279,7 +279,7 @@ public:
         }
     }
 
-    void writeVec2(b2Vec2 vec) {
+    void writeVec2(b2::Vec2 vec) {
         writeFloat(vec.x);
         writeFloat(vec.y);
     }
@@ -376,7 +376,7 @@ public:
                 writeBool(it.value());
             } else if (it.value().isUserdata()) {
                 // attempt to find what the type is
-                if (it.value().isInstance<b2Vec2>() || it.value().isInstance<glm::vec2>()) {
+                if (it.value().isInstance<b2::Vec2>() || it.value().isInstance<glm::vec2>()) {
                     auto vec = it.value();
                     // is a b2vec2, so print as 2 floats
                     writeChar(6);
@@ -523,7 +523,7 @@ public:
                     table[key] = readTable(relocTable);
                     break;
                 case 6:
-                    table[key] = b2Vec2(readFloat(), readFloat());
+                    table[key] = b2::Vec2(readFloat(), readFloat());
                     break;
                 default:
                     throw SerialError("Corrupted save file");
@@ -633,7 +633,7 @@ public:
         return scene;
     }
 
-    b2Vec2 readb2Vec2() {
+    b2::Vec2 readb2Vec2() {
         float x = readFloat();
         float y = readFloat();
         return {x, y};
