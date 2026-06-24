@@ -20,8 +20,8 @@
 #pragma clang diagnostic ignored "-Wdeprecated"
 #endif
 
-#include "../rapidjson/document.h"
-#include "../rapidjson/filereadstream.h"
+#include "rapidjson/document.h"
+#include "rapidjson/filereadstream.h"
 
 #ifndef _WIN32
 #pragma clang diagnostic pop

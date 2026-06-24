@@ -11,10 +11,11 @@ set(BOX2D_BUILD_SHARED ON CACHE BOOL "Build Box2D shared libraries" FORCE)
 set(BOX2D_BUILD_EXAMPLES OFF CACHE BOOL "Build Box2D examples" FORCE)
 add_subdirectory(Box2D)
 add_subdirectory(Lua)
+add_subdirectory(rapidjson)
 
 include_directories(
         glm/glm
-        rapidsjon
+        rapidjson/include
         SDL_Image
         SDL_mixer
         SDL_TTF
